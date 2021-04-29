@@ -8,5 +8,4 @@ $(function () {
     gradients: true,
     autoCenter: false,
   });
-  console.log(nowpage);
 });

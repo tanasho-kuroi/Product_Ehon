@@ -1,6 +1,6 @@
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: 'AIzaSyC4zb_-tmQ_V9Z0pjSIU-inQczMeRr7F-w',
+  apiKey: '',
   authDomain: 'jsehon-1a4e0.firebaseapp.com',
   projectId: 'jsehon-1a4e0',
   storageBucket: 'jsehon-1a4e0.appspot.com',
@@ -24,16 +24,16 @@ let blob;
 let idName; //写真をUPするHTMLのID名
 let upPage; //写真をアップするページ(数)
 let imgSampleR; //firebase上の画像URL
-let readMaxPage; //読み込んだページのMax値。これ以下のページは読み込みしない(２重読み込み防止)。
-readMaxPage = 1;
+let readMaxPage = 0; //読み込んだページのMax値。これ以下のページは読み込みしない(２重読み込み防止)。
+let totalPageValue; //HTMLに登録したページ数の最大値。turn.min.jsから情報引っ張ってくる
 
 ///////////  開いているPageから写真のPath取得  /////////////
 const getPicPath = function (upPage) {
   idName = 'page' + upPage; //page数をid名に反映
-  console.log(upPage);
+  // console.log(upPage);
   imgSampleR = document.getElementById(idName);
-  // console.log(idName);
-  // console.log(imgSampleR);
+  console.log(idName);
+  console.log(imgSampleR);
   return imgSampleR;
 };
 
@@ -49,17 +49,16 @@ const getLocalStoragePath = function (idName) {
 };
 
 ///////////  画像アップロード  /////////////
-const imgUploadBook = function (upPage, file_name) {
+const imgUploadBook = async function (upPage, file_name) {
   uploadRef = storage.ref(`${upPage}`).child(file_name);
-  uploadRef
+  await uploadRef //時間がかかる処理！！
     .getDownloadURL()
     .then((url) => {
       //HTMLに表示
-      // imgSampleR.style.backgroundImage = 'url(' + url + ')';
       console.log(url);
       imgSampleR.src = url;
-      var orgWidth = imgSampleR.width; // 元の横幅を保存
-      var orgHeight = imgSampleR.height; // 元の高さを保存
+      // var orgWidth = imgSampleR.width; // 元の横幅を保存
+      // var orgHeight = imgSampleR.height; // 元の高さを保存
 
       imgSampleR.style.width = 520 + 'px';
       // imgSample.height = orgHeight * (imgSample.width / orgWidth); //縦横比維持
@@ -75,26 +74,55 @@ const imgUploadBook = function (upPage, file_name) {
 ////// flipBookが変更された際に処理開始 //////
 flipBook.addEventListener('click', (e, page) => {
   nowPage = $('#flipbook').turn('page'); //page数の取得
-  upPage = Math.floor(nowPage / 2) + 1; //1ページ先ということで,+1
+  totalPageValue = $('#flipbook').data().totalPages / 2;
 
-  if (upPage > readMaxPage) {
-    //  開いているPageから写真のPath取得
-    imgSampleR = getPicPath(upPage);
+  upPage = Math.floor(nowPage / 2) + 1; //1ページ先ということで,+1。２ページ先はturn.jsの使用でまだ認識されないため不可。
+  if (totalPageValue >= upPage) {
+    if (upPage > readMaxPage) {
+      //  開いているPageから写真のPath取得
+      getPicPath(upPage);
 
-    //  local storageから画像のファイル名取得
-    file_name = getLocalStoragePath(idName);
-    console.log(file_name);
+      //  local storageから画像のファイル名取得
+      file_name = getLocalStoragePath(idName);
+      console.log(file_name);
 
-    // 画像アップロード
-    uploadRef = imgUploadBook(upPage, file_name);
+      // 画像アップロード
+      imgUploadBook(upPage, file_name);
 
-    readMaxPage = upPage; //readMaxPageの更新
+      readMaxPage = upPage; //readMaxPageの更新
+    }
   }
-  console.log(readMaxPage);
-  console.log(upPage);
 });
 
-// fileUpが変更された際に処理開始
+//
+//
+
+//////////////// ページ読み込みの際に画像DL ///////////////
+
+window.onload = async () => {
+  //htmlロード完了したらストレージの画像を表示してみる
+  for (let i = 0; i <= 1; i++) {
+    upPage = i;
+    //  開いているPageから写真のPath取得
+    await getPicPath(upPage);
+    //console.log(upPage);
+
+    //  local storageから画像のファイル名取得
+    let file_nameR = await getLocalStoragePath(idName);
+
+    // 画像アップロード
+    // let imgUPfin;
+    await imgUploadBook(upPage, file_nameR);
+
+    if (upPage > readMaxPage) {
+      readMaxPage = upPage;
+    } //readMaxPageの更新
+  }
+};
+
+//
+//
+//////////////// fileUpが変更された際に処理開始 ///////////////
 fileUp.addEventListener('change', (e, page) => {
   // e.preventDefault(); //ページ遷移をなくす
   nowPage = $('#flipbook').turn('page'); //page数の取得
@@ -127,10 +155,9 @@ fileUp.addEventListener('change', (e, page) => {
       .getDownloadURL()
       .then((url) => {
         //HTMLに表示
-        // imgSample.style.backgroundImage = 'url(' + url + ')';
         imgSample.src = url;
-        var orgWidth = imgSample.width; // 元の横幅を保存
-        var orgHeight = imgSample.height; // 元の高さを保存
+        // var orgWidth = imgSample.width; // 元の横幅を保存
+        // var orgHeight = imgSample.height; // 元の高さを保存
 
         imgSample.style.width = 520 + 'px';
         // imgSample.height = orgHeight * (imgSample.width / orgWidth); //縦横比維持
@@ -145,23 +172,3 @@ fileUp.addEventListener('change', (e, page) => {
   file_name = '';
   blob = '';
 });
-
-//////////////// ページ読み込みの際に画像DL ///////////////
-
-window.onload = function () {
-  //htmlロード完了したらストレージの画像を表示してみる
-  upPage = 0;
-  //  開いているPageから写真のPath取得
-  imgSampleR = getPicPath(upPage);
-
-  //  local storageから画像のファイル名取得
-  file_name = getLocalStoragePath(idName);
-  console.log(file_name);
-
-  // 画像アップロード
-  uploadRef = imgUploadBook(upPage, file_name);
-
-  if (upPage > readMaxPage) {
-    readMaxPage = upPage;
-  } //readMaxPageの更新
-};
