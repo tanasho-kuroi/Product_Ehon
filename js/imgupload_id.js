@@ -13,7 +13,6 @@ firebase.initializeApp(firebaseConfig);
 // grobal variable
 // set instance
 const form = document.querySelector('form');
-// const imgSample = document.getElementById('imgSample');
 let imgSample = document.getElementById('page3');
 const fileUp = document.getElementById('fileup');
 const storage = firebase.storage(); //Cloud Storage
@@ -60,7 +59,7 @@ const imgUploadBook = async function (upPage, file_name) {
       // var orgWidth = imgSampleR.width; // 元の横幅を保存
       // var orgHeight = imgSampleR.height; // 元の高さを保存
 
-      imgSampleR.style.width = 520 + 'px';
+      imgSampleR.style.width = 420 + 'px';
       // imgSample.height = orgHeight * (imgSample.width / orgWidth); //縦横比維持
       // 元の縦横比でやろうとした
     })
@@ -123,15 +122,14 @@ window.onload = async () => {
 //
 //
 //////////////// fileUpが変更された際に処理開始 ///////////////
-fileUp.addEventListener('change', (e, page) => {
+fileUp.addEventListener('change', (e) => {
   // e.preventDefault(); //ページ遷移をなくす
   nowPage = $('#flipbook').turn('page'); //page数の取得
 
   upPage = Math.floor(nowPage / 2);
   idName = 'page' + upPage; //page数をid名に反映
   console.log(idName);
-  imgSample = document.getElementById(idName);
-  // console.log(imgSample);
+  imgSampleR = document.getElementById(idName);
   var file = e.target.files;
   file_name = file[0].name; //file name取得
   blob = new Blob(file, { type: 'image/jpeg' }); //blob形式
@@ -155,11 +153,11 @@ fileUp.addEventListener('change', (e, page) => {
       .getDownloadURL()
       .then((url) => {
         //HTMLに表示
-        imgSample.src = url;
+        imgSampleR.src = url;
         // var orgWidth = imgSample.width; // 元の横幅を保存
         // var orgHeight = imgSample.height; // 元の高さを保存
 
-        imgSample.style.width = 520 + 'px';
+        imgSampleR.style.width = 520 + 'px';
         // imgSample.height = orgHeight * (imgSample.width / orgWidth); //縦横比維持
         // 元の縦横比でやろうとしたけど、、、逆におかしくなる？
       })
