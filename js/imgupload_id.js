@@ -24,6 +24,8 @@ let blob;
 let idName; //写真をUPするHTMLのID名
 let upPage; //写真をアップするページ(数)
 let imgSampleR; //firebase上の画像URL
+let readMaxPage; //読み込んだページのMax値。これ以下のページは読み込みしない(２重読み込み防止)。
+readMaxPage = 1;
 
 ///////////  開いているPageから写真のPath取得  /////////////
 const getPicPath = function (upPage) {
@@ -70,20 +72,26 @@ const imgUploadBook = function (upPage, file_name) {
   return uploadRef;
 };
 
-// flipBookが変更された際に処理開始
+////// flipBookが変更された際に処理開始 //////
 flipBook.addEventListener('click', (e, page) => {
   nowPage = $('#flipbook').turn('page'); //page数の取得
   upPage = Math.floor(nowPage / 2) + 1; //1ページ先ということで,+1
 
-  //  開いているPageから写真のPath取得
-  imgSampleR = getPicPath(upPage);
+  if (upPage > readMaxPage) {
+    //  開いているPageから写真のPath取得
+    imgSampleR = getPicPath(upPage);
 
-  //  local storageから画像のファイル名取得
-  file_name = getLocalStoragePath(idName);
-  console.log(file_name);
+    //  local storageから画像のファイル名取得
+    file_name = getLocalStoragePath(idName);
+    console.log(file_name);
 
-  // 画像アップロード
-  uploadRef = imgUploadBook(upPage, file_name);
+    // 画像アップロード
+    uploadRef = imgUploadBook(upPage, file_name);
+
+    readMaxPage = upPage; //readMaxPageの更新
+  }
+  console.log(readMaxPage);
+  console.log(upPage);
 });
 
 // fileUpが変更された際に処理開始
@@ -152,4 +160,8 @@ window.onload = function () {
 
   // 画像アップロード
   uploadRef = imgUploadBook(upPage, file_name);
+
+  if (upPage > readMaxPage) {
+    readMaxPage = upPage;
+  } //readMaxPageの更新
 };
