@@ -1,6 +1,6 @@
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: '',
+  apiKey: 'AIzaSyC4zb_-tmQ_V9Z0pjSIU-inQczMeRr7F-w',
   authDomain: 'jsehon-1a4e0.firebaseapp.com',
   projectId: 'jsehon-1a4e0',
   storageBucket: 'jsehon-1a4e0.appspot.com',
@@ -9,7 +9,7 @@ const firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-var db = firebase.firestore().collection('ehonText'); //ehonTextという名前のコレクションがdbという名前で定義された感じ
+var db = firebase.firestore().collection('EhonProduct'); //EhonProductという名前のコレクションがdbという名前で定義された感じ
 
 //
 // grobal variable
@@ -28,12 +28,12 @@ let nowPage;
 let upPage; //写真をアップするページ(数)
 let numberOfPages; //本のページ数の最大値。turn.min.jsから情報引っ張ってくる
 let numberOfPagesUP; //本のページ数の1/2。アップロードとかの処理に使う
-let imgSampleR; //firebase上の画像URL
+let imgSampleRead; //firebase上の画像URL
 let uploadRef;
 let readMaxPage = 0; //読み込んだページのMax値。これ以下のページは読み込みしない(２重読み込み防止)。
 
 // numberOfPages = $('#flipbook').data().totalPages;
-numberOfPages = 30;
+numberOfPages = 10;
 numberOfPagesUP = numberOfPages / 2;
 
 // ///////////  最初にPageを生成  /////////////
@@ -82,6 +82,7 @@ $(function () {
     duration: 1500,
     gradients: true,
     autoCenter: false,
+    // 読み込まれたページ分作成
     // when: {
     //   turning: function (e, page, view) {
     //     // Gets the range of pages that the book needs right now
@@ -108,13 +109,13 @@ $(function () {
 const getPicPath = function (upPage) {
   idName = 'page' + upPage; //page数をid名に反映
   // console.log(upPage);
-  imgSampleR = document.getElementById(idName);
+  imgSampleRead = document.getElementById(idName);
   console.log(idName);
-  console.log(imgSampleR);
-  return imgSampleR;
+  console.log(imgSampleRead);
+  return imgSampleRead;
 };
 
-///////////  local storageから画像のファイル名取得  /////////////
+///////////  firestoreから画像のファイル名取得  /////////////
 const getLocalStoragePath = function (idName) {
   if (localStorage.getItem(idName)) {
     jsonData = localStorage.getItem(idName);
@@ -134,13 +135,13 @@ const imgUploadBook = async function (uploadRef) {
     .then((url) => {
       //HTMLに表示
       console.log(url);
-      imgSampleR.src = url;
-      // imgSampleR.style.width = 100 + '%';
-      // imgSampleR.style.height = 90 + '%';
+      imgSampleRead.src = url;
+      // imgSampleRead.style.width = 100 + '%';
+      // imgSampleRead.style.height = 90 + '%';
       //
       // 元の縦横比でやろうとした
-      // var orgWidth = imgSampleR.width; // 元の横幅を保存
-      // var orgHeight = imgSampleR.height; // 元の高さを保存
+      // var orgWidth = imgSampleRead.width; // 元の横幅を保存
+      // var orgHeight = imgSampleRead.height; // 元の高さを保存
       // imgSample.height = orgHeight * (imgSample.width / orgWidth); //縦横比維持
     })
     .catch(function (error) {
@@ -227,7 +228,7 @@ fileUp.addEventListener('change', (e) => {
   // Page数とファイルアップする場所の取得
   nowPage = $('#flipbook').turn('page'); //page数の取得
   upPage = Math.floor(nowPage / 2);
-  let imgSampleRead = getPicPath(upPage); //写真アップする場所のHTML情報入手
+  let imgSampleReadead = getPicPath(upPage); //写真アップする場所のHTML情報入手
 
   // ファイル名取得
   var file = e.target.files;
