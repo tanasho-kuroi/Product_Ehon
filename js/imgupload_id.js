@@ -22,6 +22,7 @@ const storage = firebase.storage(); //Cloud Storage
 const flipBook = document.getElementById('flipbook');
 
 let file_name; //画像のファイル名
+let txtStory;
 let blob;
 let idName; //写真をUPするHTMLのID名
 let nowPage;
@@ -34,7 +35,7 @@ let readMaxPage = 0; //読み込んだページのMax値。これ以下のペー
 let thisPageDoc;
 
 // numberOfPages = $('#flipbook').data().totalPages;
-numberOfPages = 10;
+numberOfPages = 8;
 numberOfPagesUP = numberOfPages / 2;
 
 // ///////////  最初にPageを生成  /////////////
@@ -115,7 +116,7 @@ const getPicPath = function (upPage) {
   return imgSampleRead;
 };
 
-///////////  firestoreから画像のファイル名取得  /////////////
+///////////  firestoreから画像のファイル名&txt取得  /////////////
 // firestoreからデータ引き出し
 const URLDownloadFireStore = async function (upPage) {
   const dataArray = []; //必要なデータだけが入った配列(リロードしても最初から入っている？)
@@ -139,7 +140,7 @@ const URLDownloadFireStore = async function (upPage) {
         dataArray.push(data); //dataArrayの末尾にdata追加(dataが一つのドキュメント情報、dataArrayが全てを入れた配列)
 
         file_name = data.data.imgURL;
-        // file_name = doc.data.imgURL;
+        txtStory = data.data.txt;
       } else {
         // doc.data() will be undefined in this case
         console.log('No such document!');
@@ -220,7 +221,7 @@ flipBook.addEventListener('click', (e, page) => {
 //
 //
 
-//////////////// Webページ読み込みの際に画像DL ///////////////
+//////////////// Webページ読み込みの際に画像&txtDL ///////////////
 
 window.onload = async () => {
   $('#edit-menu__addPage').prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
@@ -234,14 +235,31 @@ window.onload = async () => {
 
     // firestoreからファイル名取得
     await URLDownloadFireStore(upPage); //file_name定義
-    // let file_nameRead = file_name;
-    console.log(file_name);
+    let file_nameRead = file_name;
+    let txtStoryRead = txtStory;
+    console.log(file_nameRead);
     //
     //
     // 画像アップロード
     // if (file_nameRead) {
-    if (file_name) {
-      uploadRef = storage.ref(`${upPage}`).child(file_name);
+    if (file_nameRead) {
+      uploadRef = storage.ref(`${upPage}`).child(file_nameRead);
+      await imgUploadBook(uploadRef);
+    } else {
+      // file_name = null;
+    }
+
+    // txtアップロード
+    var tagArray = [];
+    var txtIDup = 'txt' + upPage;
+    var tag = `<p>${txtStoryRead}</p>`;
+    tagArray.push(tag);
+
+    await $(`#${txtIDup}`).html(tagArray);
+    console.log(tagArray);
+
+    if (file_nameRead) {
+      uploadRef = storage.ref(`${upPage}`).child(file_nameRead);
       await imgUploadBook(uploadRef);
     } else {
       // file_name = null;
