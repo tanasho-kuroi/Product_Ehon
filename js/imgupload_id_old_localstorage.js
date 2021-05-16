@@ -111,7 +111,8 @@ const getPicPath = function (upPage) {
   idName = 'page' + upPage; //page数をid名に反映
   // console.log(upPage);
   imgSampleRead = document.getElementById(idName);
-
+  console.log(idName);
+  console.log(imgSampleRead);
   return imgSampleRead;
 };
 
@@ -129,15 +130,18 @@ const URLDownloadFireStore = async function (upPage) {
     .get()
     .then((doc) => {
       if (doc.exists) {
-        // console.log('Document data:', doc.data());
+        console.log('Document data:', doc.data());
 
         const data = {
           id: doc.id, //自動で指定しているドキュメントのID
           data: doc.data(), //上記IDのドキュメントの中身
+          // id: thisPage.doc('docPage1').id, //自動で指定しているドキュメントのID
+          // data: thisPage.doc('docPage1').data(), //上記IDのドキュメントの中身
         };
 
         dataArray.push(data); //dataArrayの末尾にdata追加(dataが一つのドキュメント情報、dataArrayが全てを入れた配列)
-
+        console.log(data);
+        console.log(dataArray);
         file_name = data.data.imgURL;
         // file_name = doc.data.imgURL;
       } else {
@@ -160,15 +164,31 @@ const URLDownloadFireStore = async function (upPage) {
 //
 //
 //
+///////////  LocalStorageから画像のファイル名取得(旧)  /////////////
+const getLocalStoragePath = function (idName) {
+  if (localStorage.getItem(idName)) {
+    jsonData = localStorage.getItem(idName);
+    data = JSON.parse(jsonData);
+    // console.log(data);
+    file_name = data.fileLocal;
+  } else {
+    file_name = null;
+  }
+  return file_name;
+};
+
+//
+//
+//
+//
 ///////////  画像アップロード  /////////////
 const imgUploadBook = async function (uploadRef) {
   await uploadRef //時間がかかる処理！！
     .getDownloadURL()
     .then((url) => {
       //HTMLに表示
-      imgSampleRead.src = url;
       console.log(url);
-
+      imgSampleRead.src = url;
       // imgSampleRead.style.width = 100 + '%';
       // imgSampleRead.style.height = 90 + '%';
       //
@@ -204,10 +224,12 @@ flipBook.addEventListener('click', (e, page) => {
       //  開いているPageから写真のPath取得
       getPicPath(upPage);
 
-      // firestoreからファイル名取得
-      URLDownloadFireStore(upPage); //この中でfile_name 定義
+      //  local storageから画像のファイル名取得
+      file_name = getLocalStoragePath(idName);
+      console.log(file_name);
+
       // 画像アップロード
-      // await imgUploadBook(upPage, file_name);
+      // await imgUploadBook(upPage, file_nameR);
       uploadRef = storage.ref(`${upPage}`).child(file_name);
       imgUploadBook(uploadRef);
 
@@ -231,16 +253,15 @@ window.onload = async () => {
     upPage = i;
     //  開いているPageから写真のPath取得
     await getPicPath(upPage);
+    //console.log(upPage);
 
-    // firestoreからファイル名取得
-    await URLDownloadFireStore(upPage); //file_name定義
-    // let file_nameRead = file_name;
-    console.log(file_name);
-    //
-    //
+    //  local storageから画像のファイル名取得
+    let file_nameR = await getLocalStoragePath(idName);
+
     // 画像アップロード
-    // if (file_nameRead) {
-    if (file_name) {
+    // let imgUPfin;
+    // await imgUploadBook(upPage, file_nameR);
+    if (file_nameR) {
       uploadRef = storage.ref(`${upPage}`).child(file_name);
       await imgUploadBook(uploadRef);
     } else {
@@ -258,7 +279,7 @@ window.onload = async () => {
 //
 //
 //////////////// 画像アップロード：fileUpが変更された際に処理開始 ///////////////
-fileUp.addEventListener('change', async (e) => {
+fileUp.addEventListener('change', (e) => {
   // e.preventDefault(); //ページ遷移をなくす
 
   // Page数とファイルアップする場所の取得
@@ -272,56 +293,26 @@ fileUp.addEventListener('change', async (e) => {
   blob = new Blob(file, { type: 'image/jpeg' }); //blob形式
   console.warn(blob);
 
-  // firestoreにPage数とファイル名を保存(その前に、同じPage数のもの削除)
-  colPage = 'Page' + upPage;
-  col_docPage = 'docPage' + upPage;
-  thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
-  const data = {
-    imgURL: file_name,
+  //
+  // localstrageにPage数とファイル名を保存(その前に、同じPage数のもの削除)
+  const dataPath = {
+    pageLocal: upPage,
+    fileLocal: file_name,
   };
-  thisPageDoc.get().then(async (doc) => {
-    if (doc.exists) {
-      await thisPageDoc
-        .update(data)
-        .then(() => {
-          console.log('Document successfully updated!');
-        })
-        .catch((error) => {
-          // The document probably doesn't exist.
-          console.error('Error updating document: ', error);
-        });
-    } else {
-      //Pageのデータがない時は、追加
-      await thisPageDoc
-        .set(data)
-        .then(() => {
-          console.log('Document successfully added!');
-        })
-        .catch((error) => {
-          // The document probably doesn't exist.
-          console.error('Error updating document: ', error);
-        });
-      // await txtMakeFireStore();
-      // console.error('Page is not exist');
-    }
-  });
+  const jsonData = JSON.stringify(dataPath); //配列をJSONdata(文字列)変換
+  localStorage.removeItem(idName); // localstorageに既に保存済みの、同じPageのPath削除
+  localStorage.setItem(idName, jsonData); // localstorageに保存
 
   //
-  ////
-  //
-  //
-  // storageのarea_imagesへの参照を定義(Local Storage)
+  // storageのarea_imagesへの参照を定義
   uploadRef = storage.ref(`${upPage}`).child(file_name); // URL取得
+  console.log(uploadRef);
 
-  // storageのarea_imagesへの参照を定義(Firestore)
-  // var uploadRefFF = thisPageDoc.get(imgURL);
-  // var uploadRefFF = await URLDownloadFireStore(upPage);
-  // console.log(uploadRefFF);
-  //
   // put() は、JavaScript の File API や Blob API 経由でファイルを取得し、Cloud Storage にアップロードする
-  await uploadRef.put(blob).then(function (snapshot) {
+  uploadRef.put(blob).then(function (snapshot) {
     //↑この時点でcloud storage にはアップロードしている。
-
+    console.log(uploadRef);
+    console.log(snapshot.state);
     //
     // HTML表示
     imgUploadBook(uploadRef);
@@ -329,6 +320,9 @@ fileUp.addEventListener('change', async (e) => {
     URLDownloadFireStore(upPage);
   });
 
+  //
+  //
+  //
   //
   //
   // value リセットする
@@ -341,6 +335,7 @@ function addPage() {
   // 本の全ページ数取得
   let pageCount = $('#flipbook').turn('pages') * 1;
   // let pageCount_floor = Math.floor(pageCount / 2) + 1;
+  console.log(pageCount);
 
   // let txtID = 'txt' + pageCount_floor;
   // let imgID = 'page' + pageCount_floor;
@@ -370,7 +365,7 @@ function addPage() {
     `" class="pagePic" />
     </div>`;
 
-  // console.log(element_img);
+  console.log(element_img);
 
   $('#flipbook')
     .turn('addPage', element_txt, upPage * 2)

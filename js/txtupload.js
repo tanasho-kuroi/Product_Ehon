@@ -12,7 +12,7 @@
 var db = firebase.firestore().collection('EhonProduct'); //EhonProductという名前のコレクションがdbという名前で定義された感じ
 var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
 var thisPage;
-var thisPageDoc;
+// var thisPageDoc;//imguploadにて定義済み
 var colPage;
 var col_docPage;
 // var messageRef = db.collection('rooms').doc('roomA').collection('messages').doc('message1');
