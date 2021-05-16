@@ -13,6 +13,8 @@ var db = firebase.firestore().collection('EhonProduct'); //EhonProductという�
 var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
 var thisPage;
 var thisPageDoc;
+var colPage;
+var col_docPage;
 // var messageRef = db.collection('rooms').doc('roomA').collection('messages').doc('message1');
 
 // const txtUploadBook = async function () {
@@ -23,14 +25,18 @@ const txtMakeFireStore = async function () {
   upPage = Math.floor(nowPage / 2); //page数の取得
   var txtStory = $('#textBox').val();
 
-  thisPage = thisEhonRef.collection('Page1');
+  colPage = 'Page' + upPage;
+  col_docPage = 'docPage' + upPage;
+  thisPage = thisEhonRef.collection(colPage).doc(col_docPage);
+
   const data = {
     imgURL: upPage,
     txt: txtStory, //Box内の値を取得
     // txt: $('#textBox').val(),
   };
   console.log(data);
-  await thisPage.add(data);
+  await thisPage.set(data);
+  // await thisPage.add(data);
 
   return;
 };
@@ -39,8 +45,10 @@ const txtUpdateFireStore = async function () {
   nowPage = $('#flipbook').turn('page'); //page数の取得
   upPage = Math.floor(nowPage / 2); //page数の取得
   var txtStory = $('#textBox').val();
-  // コレクション、ドキュメント名の指定を動的にしたい。
-  thisPage = thisEhonRef.collection('Page1').doc('docPage1');
+  // コレクション、ドキュメント名の指定を動的に。
+  colPage = 'Page' + upPage;
+  col_docPage = 'docPage' + upPage;
+  thisPage = thisEhonRef.collection(colPage).doc(col_docPage);
 
   const data = {
     imgURL: upPage,
@@ -75,7 +83,10 @@ const txtUpdateFireStore = async function () {
 const txtDownloadFireStore = async function (upPage) {
   const dataArray = []; //必要なデータだけが入った配列(リロードしても最初から入っている？)
   // thisPage = thisEhonRef.collection('Page1');
-  thisPageDoc = thisEhonRef.collection('Page1').doc('docPage1');
+  colPage = 'Page' + upPage;
+  col_docPage = 'docPage' + upPage;
+
+  thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
 
   await thisPageDoc
     .get()
@@ -123,8 +134,8 @@ const txtDownloadFireStore = async function (upPage) {
 
 // 送信ボタンクリック時にデータを送信する処理
 $('#send').on('click', async function () {
-  // await txtMakeFireStore();
-  await txtUpdateFireStore(upPage);
+  await txtMakeFireStore();
+  // await txtUpdateFireStore(upPage);
   await txtDownloadFireStore(upPage);
 });
 
