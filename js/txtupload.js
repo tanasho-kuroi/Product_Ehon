@@ -48,32 +48,34 @@ const txtUpdateFireStore = async function () {
   // コレクション、ドキュメント名の指定を動的に。
   colPage = 'Page' + upPage;
   col_docPage = 'docPage' + upPage;
-  thisPage = thisEhonRef.collection(colPage).doc(col_docPage);
-
+  thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
   const data = {
     imgURL: upPage,
     txt: txtStory, //Box内の値を取得
     // txt: $('#textBox').val(),
   };
-  console.log(data);
-  await thisPage
-    .update(data)
-    .then(() => {
-      console.log('Document successfully updated!');
-    })
-    .catch((error) => {
-      // The document probably doesn't exist.
-      console.error('Error updating document: ', error);
-    });
+  //
+  //
+  await thisPageDoc.get().then(async (doc) => {
+    if (doc.exists) {
+      console.log(data);
+      await thisPageDoc
+        .update(data)
+        .then(() => {
+          console.log('Document successfully updated!');
+        })
+        .catch((error) => {
+          // The document probably doesn't exist.
+          console.error('Error updating document: ', error);
+        });
+    } else {
+      await txtMakeFireStore(); //Pageのデータがない時は、追加Funcrtionへ
+      // doc.data() will be undefined in this case
+    }
+  });
 
   return;
 };
-// 更新処理にする！！
-// 更新の流れは？
-// IDを持ってきて →IDが一致するものの、どの要素を更新するか →更新
-// そのページのものがあるかどうかの条件分岐は要るかも(いらないかも)
-// もし、ドキュメントに存在しないデータを指定した場合、データが追記されます。
-// addを更新に変えるだけでいけるかも？
 
 // 改行は優先順位低い
 //
@@ -134,8 +136,8 @@ const txtDownloadFireStore = async function (upPage) {
 
 // 送信ボタンクリック時にデータを送信する処理
 $('#send').on('click', async function () {
-  await txtMakeFireStore();
-  // await txtUpdateFireStore(upPage);
+  // await txtMakeFireStore();
+  await txtUpdateFireStore(upPage);
   await txtDownloadFireStore(upPage);
 });
 
