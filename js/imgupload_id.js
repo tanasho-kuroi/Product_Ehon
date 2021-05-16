@@ -10,6 +10,7 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore().collection('EhonProduct'); //EhonProductという名前のコレクションがdbという名前で定義された感じ
+var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
 
 //
 // grobal variable
@@ -18,6 +19,7 @@ const form = document.querySelector('form');
 let imgSample = document.getElementById('page3');
 const fileUp = document.getElementById('fileup');
 const editAddPage = document.getElementById('edit-menu__addPage');
+const editresetPage = document.getElementById('edit-menu__resetPage');
 const storage = firebase.storage(); //Cloud Storage
 const flipBook = document.getElementById('flipbook');
 
@@ -33,10 +35,6 @@ let imgSampleRead; //firebase上の画像URL
 let uploadRef;
 let readMaxPage = 0; //読み込んだページのMax値。これ以下のページは読み込みしない(２重読み込み防止)。
 let thisPageDoc;
-
-// numberOfPages = $('#flipbook').data().totalPages;
-numberOfPages = 8;
-numberOfPagesUP = numberOfPages / 2;
 
 // ///////////  最初にPageを生成  /////////////
 // function addPageFirst(page, book) {//これ、見直す必要あり。
@@ -79,7 +77,7 @@ numberOfPagesUP = numberOfPages / 2;
 
 $(function () {
   $('#flipbook').turn({
-    pages: numberOfPages,
+    pages: 50,
     elevation: 30,
     duration: 1500,
     gradients: true,
@@ -221,12 +219,55 @@ flipBook.addEventListener('click', (e, page) => {
 //
 //
 
+// //////////////// 現在のTotalPage読み込み ///////////////
+
+// window.ready = async () => {
+const ReadTotalPage = async function () {
+  // 現在のTotalPageを読み込む
+  await thisEhonRef
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        console.log('Document data:', doc.data());
+        numberOfPages = doc.data().TotalPage;
+        console.log(numberOfPages);
+        // const data = {
+        //   id: doc.id, //自動で指定しているドキュメントのID
+        //   data: doc.data(), //上記IDのドキュメントの中身
+        //   // id: thisPage.doc('docPage1').id, //自動で指定しているドキュメントのID
+        //   // data: thisPage.doc('docPage1').data(), //上記IDのドキュメントの中身
+        // };
+        // dataArray.push(data); //dataArrayの末尾にdata追加(dataが一つのドキュメント情報、dataArrayが全てを入れた配列)
+        // console.log(data);
+        // console.log(dataArray);
+        // numberOfPages = doc.data.TotalPage;
+      } else {
+        // doc.data() will be undefined in this case
+        console.log('No such document!');
+      }
+    })
+    .catch((error) => {
+      console.log('Error getting document:', error);
+    });
+  return numberOfPages;
+};
+
+//
+//
+//
 //////////////// Webページ読み込みの際に画像&txtDL ///////////////
 
 window.onload = async () => {
   $('#edit-menu__addPage').prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
-  // let numberOfPagesUP = $('#flipbook').turn('pages') * 1;
+  // const numberOfPages = 8;
+  numberOfPages = await ReadTotalPage();
+  console.log(numberOfPages);
+  numberOfPagesUP = numberOfPages / 2;
 
+  // 現在のTotalPageを読み込む
+  // await ReadTotalPage();
+  //
+  //
   //htmlロード完了したらストレージの画像を表示してみる
   for (let i = 0; i <= numberOfPagesUP; i++) {
     upPage = i;
@@ -357,7 +398,7 @@ fileUp.addEventListener('change', async (e) => {
 ///////////  Pageの追加  /////////////
 function addPage() {
   // 本の全ページ数取得
-  let pageCount = $('#flipbook').turn('pages') * 1;
+  let pageCount = $('#flipbook').turn('pages');
   // let pageCount_floor = Math.floor(pageCount / 2) + 1;
 
   // let txtID = 'txt' + pageCount_floor;
@@ -389,6 +430,13 @@ function addPage() {
     </div>`;
 
   // console.log(element_img);
+  numberOfPages = numberOfPages + 2;
+
+  const dataTotalPage = {
+    TotalPage: numberOfPages,
+  };
+  console.log(dataTotalPage);
+  thisEhonRef.set(dataTotalPage);
 
   $('#flipbook')
     .turn('addPage', element_txt, upPage * 2)
@@ -414,6 +462,19 @@ editAddPage.addEventListener('click', (e, page) => {
 });
 // //
 
+//
+//
+//////////////// Pageのリセット ///////////////
+editresetPage.addEventListener('click', (e, page) => {
+  numberOfPages = 8;
+  console.log('Page reset:' + numberOfPages);
+
+  const dataTotalPage = {
+    TotalPage: numberOfPages,
+  };
+  thisEhonRef.set(dataTotalPage);
+});
+// //
 //
 //
 //

@@ -10,8 +10,8 @@
 // Initialize Firebase
 // firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore().collection('EhonProduct'); //EhonProductという名前のコレクションがdbという名前で定義された感じ
-var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
-var thisPage;
+// var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
+// var thisPage;
 // var thisPageDoc;//imguploadにて定義済み
 var colPage;
 var col_docPage;
@@ -41,6 +41,9 @@ const txtMakeFireStore = async function () {
   return;
 };
 
+//
+//
+// txtの更新 or 追加
 const txtUpdateFireStore = async function () {
   nowPage = $('#flipbook').turn('page'); //page数の取得
   upPage = Math.floor(nowPage / 2); //page数の取得

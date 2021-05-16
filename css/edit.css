@@ -116,6 +116,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 .edit-menu__page-edit__contents:nth-child(1) {
   background-color: rgb(250, 247, 157);
