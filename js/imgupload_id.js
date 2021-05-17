@@ -18,7 +18,7 @@ var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
 const form = document.querySelector('form');
 let imgSample = document.getElementById('page3');
 const fileUp = document.getElementById('fileup');
-const editAddPage = document.getElementById('edit-menu__addPage');
+const editAddPage = document.getElementById('edit-menu__addPageButton');
 const editresetPage = document.getElementById('edit-menu__resetPage');
 const storage = firebase.storage(); //Cloud Storage
 const flipBook = document.getElementById('flipbook');
@@ -37,7 +37,8 @@ let readMaxPage = 0; //読み込んだページのMax値。これ以下のペー
 let thisPageDoc;
 
 // ///////////  最初にPageを生成  /////////////
-// function addPageFirst(page, book) {//これ、見直す必要あり。
+// function addPageFirst(page, book) {
+//   //これ、見直す必要あり。
 //   //  First check if the page is already in the book
 //   if (!book.turn('hasPage', page)) {
 //     //hasPage: Returns true if a page is in memory.
@@ -77,25 +78,28 @@ let thisPageDoc;
 
 $(function () {
   $('#flipbook').turn({
-    pages: 50,
+    pages: 100,
     elevation: 30,
     duration: 1500,
     gradients: true,
     autoCenter: false,
-    // 読み込まれたページ分作成
+    // // 読み込まれたページ分作成
     // when: {
     //   turning: function (e, page, view) {
+    //     // function(e, page, view) {
     //     // Gets the range of pages that the book needs right now
     //     var range = $(this).turn('range', page);
     //     // Check if each page is within the book
-    //     for (page = range[0]; page <= range[1]; page++) {
-    //       addPage(page, $(this));
+    //     // for (page = range[0]; page <= range[1]; page++) {
+    //     for (page = range[0]; page <= numberOfPages; page++) {
+    //       // for (page = 1; page <= numberOfPages; page++) {
+    //       addPage();
     //     }
     //   },
 
-    //   turned: function (e, page) {
-    //     $('#page-number').val(page);
-    //   },
+    //   // turned: function (e, page) {
+    //   //   $('#page-number').val(page);
+    //   // },
     // },
   });
 });
@@ -141,8 +145,12 @@ const URLDownloadFireStore = async function (upPage) {
         txtStory = data.data.txt;
       } else {
         // doc.data() will be undefined in this case
+        const data = {
+          txt: '',
+          imgURL: '',
+        };
         console.log('No such document!');
-        file_name = null;
+        thisPageDoc.set(data); // doc.data() will be undefined in this case
       }
       console.log(file_name);
 
@@ -159,14 +167,14 @@ const URLDownloadFireStore = async function (upPage) {
 //
 //
 //
-///////////  画像アップロード  /////////////
+///////////  画像ダウンロード＆表示  /////////////
 const imgUploadBook = async function (uploadRef) {
   await uploadRef //時間がかかる処理！！
     .getDownloadURL()
     .then((url) => {
       //HTMLに表示
-      imgSampleRead.src = url;
       console.log(url);
+      imgSampleRead.src = url;
 
       // imgSampleRead.style.width = 100 + '%';
       // imgSampleRead.style.height = 90 + '%';
@@ -185,37 +193,35 @@ const imgUploadBook = async function (uploadRef) {
 
 //
 //
-//
-//
 ////// pageめくりされた際(flipBookが変更された際)に処理開始 //////
 flipBook.addEventListener('click', (e, page) => {
   nowPage = $('#flipbook').turn('page'); //page数の取得
-  let pageCount = $('#flipbook').turn('pages') * 1;
-  if (nowPage == pageCount) {
+  // let pageCount = $('#flipbook').turn('pages');
+  console.log(nowPage);
+  if (nowPage == numberOfPages + 2) {
     //表紙と最終ページのみ、ページ追加ボタン「有効」
-    $('#edit-menu__addPage').prop('disabled', false); //ページ追加ボタン無効
+    $(editAddPage).prop('disabled', false); //ページ追加ボタン無効
   } else {
-    $('#edit-menu__addPage').prop('disabled', false); //ページ追加ボタン有効
+    $(editAddPage).prop('disabled', true); //ページ追加ボタン無効
   }
-  upPage = Math.floor(nowPage / 2) + 1; //1ページ先ということで,+1。２ページ先はturn.jsの使用でまだ認識されないため不可。
-  if (numberOfPagesUP >= upPage) {
-    if (upPage > readMaxPage) {
-      //  開いているPageから写真のPath取得
-      getPicPath(upPage);
+  // upPage = Math.floor(nowPage / 2) + 1; //1ページ先ということで,+1。２ページ先はturn.jsの使用でまだ認識されないため不可。
+  // if (numberOfPagesUP >= upPage) {
+  //   if (upPage > readMaxPage) {
+  //     //  開いているPageから写真のPath取得
+  //     getPicPath(upPage);
 
-      // firestoreからファイル名取得
-      URLDownloadFireStore(upPage); //この中でfile_name 定義
-      // 画像アップロード
-      // await imgUploadBook(upPage, file_name);
-      uploadRef = storage.ref(`${upPage}`).child(file_name);
-      imgUploadBook(uploadRef);
+  //     // firestoreからファイル名取得
+  //     URLDownloadFireStore(upPage); //この中でfile_name 定義
+  //     // 画像アップロード
+  //     // await imgUploadBook(upPage, file_name);
+  //     uploadRef = storage.ref(`${upPage}`).child(file_name);
+  //     imgUploadBook(uploadRef);
 
-      readMaxPage = upPage; //readMaxPageの更新
-    }
-  }
+  //     readMaxPage = upPage; //readMaxPageの更新
+  //   }
+  // }
 });
 
-//
 //
 //
 
@@ -252,27 +258,99 @@ const ReadTotalPage = async function () {
   return numberOfPages;
 };
 
+///////////  Pageの追加(HTML記述を追加するのみ)  /////////////
+async function addPage(nowPage) {
+  // 本の全ページ数取得
+  // let pageCount = $('#flipbook').turn('pages');
+
+  // Page数とファイルアップする場所の取得
+  // nowPage = $('#flipbook').turn('page'); //page数の取得
+  // upPage = Math.floor(pageCount / 2);
+  upPage = Math.floor(nowPage / 2);
+
+  // firestoreの値抽出
+  colPage = 'Page' + upPage;
+  col_docPage = 'docPage' + upPage;
+  console.log(colPage);
+  thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
+  // await thisPageDoc.get().then(async (doc) => {
+  const data = {
+    txt: '',
+    imgURL: '',
+  };
+  thisPageDoc.get().then(async (doc) => {
+    // const data_add = {
+    //   id: doc.id,
+    //   data: doc.data(),
+    // };
+
+    if (doc.exists) {
+      // let img_add = data_add.data.imgURL;
+      // let txt_add = data_add.data.txt;
+    } else {
+      thisPageDoc.set(data); // doc.data() will be undefined in this case
+      console.log('addNULL');
+    }
+  });
+  //
+  // この中に、写真テキストアップロードも組み込めないか？
+  // タグの中に入れ込んでしまえば、ページ作成＝写真テキストが入った状態にできるのでは？
+  let txtID = 'txt' + upPage;
+  let imgID = 'page' + upPage;
+  let element_txt =
+    `<div class="view__text-contents" id="` +
+    txtID +
+    `">
+      <p class="view__text-contents__p"></p>
+    </div>`;
+  let element_img =
+    `<div class="view__img-contents__main">
+      <img src="" alt="" id="` +
+    imgID +
+    `" class="pagePic" />
+    </div>`;
+
+  // console.log(element_img);
+
+  await $('#flipbook').turn('addPage', element_txt, upPage * 2);
+  // .turn('pages', $('#flipbook').turn('pages'));
+  await $('#flipbook').turn('addPage', element_img, upPage * 2 + 1);
+  // .turn('pages', $('#flipbook').turn('pages'));
+}
+
 //
 //
 //
 //////////////// Webページ読み込みの際に画像&txtDL ///////////////
 
 window.onload = async () => {
-  $('#edit-menu__addPage').prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
-  // const numberOfPages = 8;
+  // $('#edit-menu__addPage').prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
+  $(editAddPage).prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
+
+  // 現在のTotalPageを読み込む
   numberOfPages = await ReadTotalPage();
   console.log(numberOfPages);
   numberOfPagesUP = numberOfPages / 2;
 
-  // 現在のTotalPageを読み込む
-  // await ReadTotalPage();
+  var lastPageClass = 'p' + numberOfPages;
+  await $('lastPage').addClass();
+  // 表紙も背表紙も、ループの中で追加したい(HTMLで書いているのではなく)
+  // 背表紙は、Total+1に追加するイメージで。
   //
   //
   //htmlロード完了したらストレージの画像を表示してみる
   for (let i = 0; i <= numberOfPagesUP; i++) {
-    upPage = i;
+    nowPage = i * 2; //page数の取得
+
+    if (i == 0) {
+      upPage = i;
+    } else {
+      console.log(i);
+      await addPage(nowPage); //Page0以外の時。このとき、upPageも更新される
+    }
+
     //  開いているPageから写真のPath取得
-    await getPicPath(upPage);
+    getPicPath(upPage);
 
     // firestoreからファイル名取得
     await URLDownloadFireStore(upPage); //file_name定義
@@ -281,7 +359,7 @@ window.onload = async () => {
     console.log(file_nameRead);
     //
     //
-    // 画像アップロード
+    // 画像ダウンロード
     // if (file_nameRead) {
     if (file_nameRead) {
       uploadRef = storage.ref(`${upPage}`).child(file_nameRead);
@@ -298,14 +376,7 @@ window.onload = async () => {
 
     await $(`#${txtIDup}`).html(tagArray);
     console.log(tagArray);
-
-    if (file_nameRead) {
-      uploadRef = storage.ref(`${upPage}`).child(file_nameRead);
-      await imgUploadBook(uploadRef);
-    } else {
-      // file_name = null;
-    }
-
+    //
     if (upPage > readMaxPage) {
       readMaxPage = upPage;
     } //readMaxPageの更新
@@ -323,15 +394,18 @@ fileUp.addEventListener('change', async (e) => {
   // Page数とファイルアップする場所の取得
   nowPage = $('#flipbook').turn('page'); //page数の取得
   upPage = Math.floor(nowPage / 2);
-  let imgSampleReadead = getPicPath(upPage); //写真アップする場所のHTML情報入手
+  console.log('upPage:' + upPage);
+
+  // let imgSampleReadead = getPicPath(upPage); //写真アップする場所のHTML情報入手
 
   // ファイル名取得
   var file = e.target.files;
+  console.log(file[0].name);
   file_name = file[0].name; //file name取得
   blob = new Blob(file, { type: 'image/jpeg' }); //blob形式
   console.warn(blob);
 
-  // firestoreにPage数とファイル名を保存(その前に、同じPage数のもの削除)
+  // firestoreにPage数とファイル名を保存(既にdataがある場合は更新update,ない場合は追加(set))
   colPage = 'Page' + upPage;
   col_docPage = 'docPage' + upPage;
   thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
@@ -366,26 +440,20 @@ fileUp.addEventListener('change', async (e) => {
   });
 
   //
-  ////
-  //
   //
   // storageのarea_imagesへの参照を定義(Local Storage)
   uploadRef = storage.ref(`${upPage}`).child(file_name); // URL取得
-
-  // storageのarea_imagesへの参照を定義(Firestore)
-  // var uploadRefFF = thisPageDoc.get(imgURL);
-  // var uploadRefFF = await URLDownloadFireStore(upPage);
-  // console.log(uploadRefFF);
-  //
+  console.log(uploadRef);
   // put() は、JavaScript の File API や Blob API 経由でファイルを取得し、Cloud Storage にアップロードする
   await uploadRef.put(blob).then(function (snapshot) {
     //↑この時点でcloud storage にはアップロードしている。
 
-    //
     // HTML表示
     imgUploadBook(uploadRef);
+    console.log('uploadRef:' + uploadRef);
 
     URLDownloadFireStore(upPage);
+    // console.log('upPage:' + upPage);
   });
 
   //
@@ -395,70 +463,20 @@ fileUp.addEventListener('change', async (e) => {
   blob = '';
 });
 
-///////////  Pageの追加  /////////////
-function addPage() {
-  // 本の全ページ数取得
-  let pageCount = $('#flipbook').turn('pages');
-  // let pageCount_floor = Math.floor(pageCount / 2) + 1;
+//////////////// Pageの追加 ボタン押し 関数呼び出し ///////////////
 
-  // let txtID = 'txt' + pageCount_floor;
-  // let imgID = 'page' + pageCount_floor;
-
-  // Page数とファイルアップする場所の取得
-  // nowPage = $('#flipbook').turn('page'); //page数の取得
-  // upPage = Math.floor(pageCount / 2);
-  upPage = Math.floor(nowPage / 2);
-
-  //
-  // この中に、写真テキストアップロードも組み込めないか？
-  // タグの中に入れ込んでしまえば、ページ作成＝写真テキストが入った状態にできるのでは？
-  //
-
-  let txtID = 'txt' + upPage;
-  let imgID = 'page' + upPage;
-  let element_txt =
-    `<div class="view__text-contents" id="` +
-    txtID +
-    `">
-      <p class="view__text-contents__p"></p>
-    </div>`;
-  let element_img =
-    `<div class="view__img-contents__main">
-                  <img src="" alt="" id="` +
-    imgID +
-    `" class="pagePic" />
-    </div>`;
-
-  // console.log(element_img);
+editAddPage.addEventListener('click', (e, page) => {
+  nowPage = $('#flipbook').turn('page'); //page数の取得
   numberOfPages = numberOfPages + 2;
+  numberOfPagesUP = numberOfPages / 2;
+  console.log(numberOfPages);
 
   const dataTotalPage = {
     TotalPage: numberOfPages,
   };
-  console.log(dataTotalPage);
   thisEhonRef.set(dataTotalPage);
 
-  $('#flipbook')
-    .turn('addPage', element_txt, upPage * 2)
-    .turn('pages', $('#flipbook').turn('pages'));
-  $('#flipbook')
-    .turn('addPage', element_img, upPage * 2 + 1)
-    .turn('pages', $('#flipbook').turn('pages'));
-}
-//id名どうするか？→変数入れこめばOK`
-//追加したい場所で追加(途中挿入)するには？→Page数を取得してその次のページを表示とした。
-// 最後のページでは追加させない(最後のページではページ追加を操作不可にする)
-// 追加した分、最後のページが押し出されて非表示になる？
-
-//nowPage取得でなんとかなったが。。。全てのページでid名を動的に変更しなくてはならない。
-
-//追加したPageを保存するには？
-
-//////////////// Pageの追加 関数呼び出し ///////////////
-
-editAddPage.addEventListener('click', (e, page) => {
-  nowPage = $('#flipbook').turn('page'); //page数の取得
-  addPage();
+  addPage(nowPage);
 });
 // //
 
@@ -467,6 +485,8 @@ editAddPage.addEventListener('click', (e, page) => {
 //////////////// Pageのリセット ///////////////
 editresetPage.addEventListener('click', (e, page) => {
   numberOfPages = 8;
+  numberOfPagesUP = numberOfPages / 2;
+
   console.log('Page reset:' + numberOfPages);
 
   const dataTotalPage = {

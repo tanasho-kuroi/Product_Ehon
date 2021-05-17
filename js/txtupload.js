@@ -30,7 +30,6 @@ const txtMakeFireStore = async function () {
   thisPage = thisEhonRef.collection(colPage).doc(col_docPage);
 
   const data = {
-    imgURL: upPage,
     txt: txtStory, //Box内の値を取得
     // txt: $('#textBox').val(),
   };
@@ -53,7 +52,6 @@ const txtUpdateFireStore = async function () {
   col_docPage = 'docPage' + upPage;
   thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
   const data = {
-    imgURL: upPage,
     txt: txtStory, //Box内の値を取得
     // txt: $('#textBox').val(),
   };
