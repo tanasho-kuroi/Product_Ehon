@@ -1,6 +1,6 @@
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: 'AIzaSyC4zb_-tmQ_V9Z0pjSIU-inQczMeRr7F-w',
+  apiKey: '',
   authDomain: 'jsehon-1a4e0.firebaseapp.com',
   projectId: 'jsehon-1a4e0',
   storageBucket: 'jsehon-1a4e0.appspot.com',
@@ -10,7 +10,10 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore().collection('EhonProduct'); //EhonProductという名前のコレクションがdbという名前で定義された感じ
-var thisEhonRef = db.doc('Mehon'); //絵本の指定(いずれ動的にする)
+var EhonName;
+EhonName = 'Mehon';
+
+var thisEhonRef = db.doc(EhonName); //絵本の指定(動的)
 
 //
 // grobal variable
@@ -20,6 +23,8 @@ let imgSample = document.getElementById('page3');
 const fileUp = document.getElementById('fileup');
 const editAddPage = document.getElementById('edit-menu__addPageButton');
 const editresetPage = document.getElementById('edit-menu__resetPage');
+const ehonChoiceBottun = document.getElementsByClassName('ehonChoiceClass');
+// const ehonChoiceBottun = document.getElementById('ehonChoiceClass');
 const storage = firebase.storage(); //Cloud Storage
 const flipBook = document.getElementById('flipbook');
 
@@ -83,24 +88,6 @@ $(function () {
     duration: 1500,
     gradients: true,
     autoCenter: false,
-    // // 読み込まれたページ分作成
-    // when: {
-    //   turning: function (e, page, view) {
-    //     // function(e, page, view) {
-    //     // Gets the range of pages that the book needs right now
-    //     var range = $(this).turn('range', page);
-    //     // Check if each page is within the book
-    //     // for (page = range[0]; page <= range[1]; page++) {
-    //     for (page = range[0]; page <= numberOfPages; page++) {
-    //       // for (page = 1; page <= numberOfPages; page++) {
-    //       addPage();
-    //     }
-    //   },
-
-    //   // turned: function (e, page) {
-    //   //   $('#page-number').val(page);
-    //   // },
-    // },
   });
 });
 
@@ -123,7 +110,6 @@ const getPicPath = function (upPage) {
 // firestoreからデータ引き出し
 const URLDownloadFireStore = async function (upPage) {
   const dataArray = []; //必要なデータだけが入った配列(リロードしても最初から入っている？)
-  // thisPage = thisEhonRef.collection('Page1');
   colPage = 'Page' + upPage;
   col_docPage = 'docPage' + upPage;
 
@@ -319,12 +305,49 @@ async function addPage(nowPage) {
   // .turn('pages', $('#flipbook').turn('pages'));
 }
 
+//////////////// 絵本の名前取得 ///////////////
+
+const EhonNameFireStore = async function (upPage) {
+  const dataArray = []; //必要なデータだけが入った配列(リロードしても最初から入っている？)
+  // var thisEhonRef = db.doc(EhonName); //絵本の指定(動的)
+
+  // thisPageDoc = thisEhonRef.collection(colPage).doc(col_docPage);
+
+  await thisEhonRef
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        console.log('Document data:', doc.data());
+
+        const data = {
+          id: doc.id, //自動で指定しているドキュメントのID
+          data: doc.data(), //上記IDのドキュメントの中身
+          // id: thisPage.doc('docPage1').id, //自動で指定しているドキュメントのID
+          // data: thisPage.doc('docPage1').data(), //上記IDのドキュメントの中身
+        };
+        EhonName = data.data.EhonName;
+        dataArray.push(data); //dataArrayの末尾にdata追加(dataが一つのドキュメント情報、dataArrayが全てを入れた配列)
+        console.log(data);
+        console.log(EhonName);
+      } else {
+        // doc.data() will be undefined in this case
+        console.log('No such document!');
+      }
+    })
+    .catch((error) => {
+      console.log('Error getting document:', error);
+    });
+  return EhonName;
+};
 //
 //
 //
 //////////////// Webページ読み込みの際に画像&txtDL ///////////////
 
 window.onload = async () => {
+  // const EhonNameRead = await EhonNameFireStore();
+  // EhonName = 'Mehon';
+
   // $('#edit-menu__addPage').prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
   $(editAddPage).prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
 
@@ -495,6 +518,22 @@ editresetPage.addEventListener('click', (e, page) => {
   };
   thisEhonRef.set(dataTotalPage);
 });
+// //
+//
+////////////////// Pageのリセット ///////////////
+
+for (var cB = 0; cB < ehonChoiceBottun.length; cB++) {
+  // ehonChoiceBottun[].addEventListener('click', (e, page) => {
+  //   EhonName = 'Mehon';
+  //   console.log(EhonName);
+  //   location.reload();
+  // });
+  ehonChoiceBottun[cB].addEventListener('click', function () {
+    EhonName = 'Dehon' + cB;
+    console.log(EhonName);
+    location.reload();
+  });
+}
 // //
 //
 //
