@@ -114,6 +114,7 @@ const getPicPath = function (upPage) {
   idName = 'page' + upPage; //page数をid名に反映
   // console.log(upPage);
   imgSampleRead = document.getElementById(idName);
+  // console.log(imgSampleRead);
 
   return imgSampleRead;
 };
