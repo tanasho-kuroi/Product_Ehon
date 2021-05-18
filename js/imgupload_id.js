@@ -23,9 +23,11 @@ db.get().then(function (querySnapshot) {
 // querySnapshot 配列になって、
 // 絵本の名前を引っ張ってくる一文を追加。
 
-let EhonName;
-// EhonName = 'Mehon';
-
+let EhonTitle;
+let EhonTotal;
+let EhonDoc;
+//
+//
 const EhonNameDLFireStore = async function () {
   await db
     .doc('EhonInfo')
@@ -37,14 +39,17 @@ const EhonNameDLFireStore = async function () {
         const data = {
           data: doc.data(), //上記IDのドキュメントの中身
         };
-        EhonName = data.data.LastEhonName;
-        console.log(EhonName);
-        thisEhonRef = db.doc(EhonName); //絵本の指定(動的)
+        EhonTitle = data.data.LastEhonName;
+        EhonTotal = data.data.EhonTotal;
+        EhonDoc = 'Dehon' + EhonTotal;
+        console.log('EhonTitle =' + EhonTitle);
+        console.log('EhonTotal =' + EhonTotal);
+        thisEhonRef = db.doc(EhonDoc); //絵本の指定(動的)
       }
     });
 };
 
-let thisEhonRef = db.doc(EhonName); //絵本の指定(動的)
+// let thisEhonRef = db.doc(EhonDoc); //絵本の指定(動的)
 
 //
 // grobal variable
@@ -56,6 +61,8 @@ const editAddPage = document.getElementById('edit-menu__addPageButton');
 const editresetPage = document.getElementById('edit-menu__resetPage');
 const ehonChoiceBottun = document.getElementsByClassName('ehonChoiceClass');
 const ehonAddBottun = document.getElementById('edit-menu__ehon_add');
+const MakeEhonTitle = document.getElementById('MakeEhonTitle');
+MakeEhonTitle.style.display = 'none';
 
 // const ehonChoiceBottun = document.getElementById('ehonChoiceClass');
 const storage = firebase.storage(); //Cloud Storage
@@ -359,7 +366,7 @@ const EhonNameFireStore = async function (upPage) {
           // id: thisPage.doc('docPage1').id, //自動で指定しているドキュメントのID
           // data: thisPage.doc('docPage1').data(), //上記IDのドキュメントの中身
         };
-        EhonName = data.data.EhonName;
+        EhonTitle = data.data.EhonName;
         dataArray.push(data); //dataArrayの末尾にdata追加(dataが一つのドキュメント情報、dataArrayが全てを入れた配列)
         console.log(data);
         console.log(EhonName);
@@ -371,7 +378,7 @@ const EhonNameFireStore = async function (upPage) {
     .catch((error) => {
       console.log('Error getting document:', error);
     });
-  return EhonName;
+  return EhonTitle;
 };
 //
 //
@@ -382,7 +389,8 @@ window.onload = async () => {
   // const EhonNameRead = await EhonNameFireStore();
 
   await EhonNameDLFireStore();
-  console.log(EhonName);
+  MakeEhonTitle.style.display = 'none';
+  console.log('EhonDoc =' + EhonDoc);
 
   // $('#edit-menu__addPage').prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
   $(editAddPage).prop('disabled', true); //ページ追加ボタン無効(最初は表紙なので)
@@ -580,52 +588,58 @@ editresetPage.addEventListener('click', (e, page) => {
 //
 //
 //
-//
+/////////////////////////////////////////////////////
 //////////////// 本(Document)の新規作成 ///////////////
-ehonAddBottun.addEventListener('click', async (e, page) => {
-  //let db = firebase.firestore().collection('EhonProduct'); //EhonProductという名前のコレクションがdbという名前で定義された感じ
+/////////////////////////////////////////////////////
 
-  let EhonName = 'Dehon5';
+//////////////// Title Box を出現させる ///////////////
+ehonAddBottun.addEventListener('click', async (e, page) => {
+  MakeEhonTitle.style.display = 'block';
+
+  //
+});
+
+//
+/////// Title Box に本の題名を書いて、本(Document)の新規作成() /////////
+$('#MakeSend').on('click', async function () {
+  let EhonTitle = $('#titleBox').val();
+  console.log('title:' + EhonTitle);
+
+  EhonTotal = EhonTotal + 1;
+  EhonDoc = 'Dehon' + EhonTotal;
+  // EhonDoc = 'Dehon9';
   let EhonTotalPage = 8;
   let data = {
-    EhonName: EhonName,
+    EhonName: EhonTitle,
     TotalPage: EhonTotalPage,
   };
+
+  let AddEhon_SubColl = db.doc(EhonDoc);
   await AddEhon_SubColl.set(data);
-
-  let AddEhon_SubColl = db.doc(EhonName);
-
-  let dataSub = {
-    imgURL: '',
-    txt: '',
-  };
 
   for (let i = 0; i < EhonTotalPage; i++) {
     let AddEhonColl = 'Page' + i;
     let AddEhonPage = 'docPage' + i;
+    let dataSub = {
+      imgURL: '',
+      txt: i,
+    };
+
     await AddEhon_SubColl.collection(AddEhonColl).doc(AddEhonPage).set(dataSub);
   }
   //
 
-  // let EhonTotal = 5;
-  // await db.doc('EhonTotal').update(EhonTotal);
-
-  let EhonNameUP = {
-    LastEhonName: EhonName,
+  let EhonDocUP = {
+    LastEhonName: EhonDoc,
+    EhonTotal: EhonTotal,
     // [EhonTotal]: EhonName,
   };
 
-  await db.doc('EhonInfo').update(EhonNameUP);
+  await db.doc('EhonInfo').update(EhonDocUP);
+  //
+  //
 
-  // let testTT = {
-  //   AddTT: 'AddEhonName',
-  // };
-  // await db.doc('EhonInfo').update(testTT);
-
-  //
-  //
-  //
-  console.log('絵本追加:' + EhonName);
+  console.log('絵本追加:' + EhonTitle);
   location.reload();
 });
 

@@ -136,7 +136,7 @@ const txtDownloadFireStore = async function (upPage) {
 };
 
 // 送信ボタンクリック時にデータを送信する処理
-$('#send').on('click', async function () {
+$('#SendText').on('click', async function () {
   // await txtMakeFireStore();
   await txtUpdateFireStore(upPage);
   await txtDownloadFireStore(upPage);
